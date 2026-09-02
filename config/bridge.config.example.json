@@ -1,0 +1,87 @@
+{
+  "_模板说明": "桥接配置模板。用法：把本文件复制一份改名为 bridge.config.json（放在同一 config 目录），再按下表填写。所有以下划线 _ 开头的键只是说明文字，程序不会读取，可留着可删掉。身份/路径类字段（selfId、主人、群号、cwd 等）在模板里全部留白，部署者自填；本地端口类默认值已按封装包约定填好，一般不用改。改完保存即热生效，无需重启桥接。",
+  "bot": {
+    "_说明": "机器人身份（只用于给 AI 的描述，不含敏感信息）。",
+    "name": ""
+  },
+  "owner": {
+    "_说明": "主人：只有这个 QQ 会被 AI 当作主人对待。qq=你的 QQ 号（数字），nick=你希望 AI 称呼你的昵称。两者都留空则无主人概念。",
+    "qq": 0,
+    "nick": ""
+  },
+  "onebot": {
+    "_说明": "NapCat OneBot 连接参数。wsUrl 指向 NapCat 的正向 WebSocket；accessToken 仅当你在 NapCat 网络配置里设了 token 才填；selfId 是你的小号 QQ 号，留空时程序自动从消息头识别。",
+    "wsUrl": "ws://127.0.0.1:3001",
+    "accessToken": "",
+    "selfId": ""
+  },
+  "dsh": {
+    "_说明": "DSH（DeepSeek Harness）连接参数。baseUrl 是本地 DSH Web 服务地址；sessionId 是会话名前缀，实际按群拼成 前缀-群号（一群一会话、记忆隔离），建议改成你自己的标识；cwd 是 AI 会话的工作目录，留空 = 封装包根目录。",
+    "baseUrl": "http://127.0.0.1:3080",
+    "sessionId": "qq-bot",
+    "cwd": ""
+  },
+  "groups": [],
+  "personaFile": "persona\\我的机器人.txt",
+  "seedExtra": "",
+  "replyPolicy": {
+    "_说明": "回复策略。rules 里的 {botName} {selfQq} {ownerNick} {ownerQq} 是占位符，程序发问前会自动替换成实际值；想改回复风格直接改 rules 文本（可在管理台网页热改）。",
+    "mode": "at-or-keyword",
+    "interestKeywords": [
+      "AI", "机器人", "帮忙", "帮我", "写", "代码", "小说", "聊天", "测试", "帮帮我", "救命", "受不了", "想死", "自杀"
+    ],
+    "blockKeywords": [
+      "转账", "密码", "验证码", "银行卡", "打钱", "借钱", "红包", "卡号"
+    ],
+    "silentMarker": "[SILENT]",
+    "contextWindow": 8,
+    "maxRepliesPerMinute": 3,
+    "replyAt": true,
+    "fallbackText": "呜……我这边刚卡了一下没回上！再戳我一次试试？(。﹏。*)",
+    "rules": "回复规则（必须遵守）：\n1) 有人 @ 你（消息里出现 @{selfQq} 或 @全体）→ 必须回复。回复开头直接称呼对方昵称即可，不要写 @ 符号（桥接会自动 @ 对方，写了会出现双重 @）；\n2) 没被 @ 时，只有当消息命中你感兴趣的话题或有人明显求助（如“帮帮我”“想死”等），且不涉及金钱隐私，才考虑插嘴；\n3) 判断时结合「最近群聊」上下文，像真人一样克制：觉得值得插嘴就正常回复（带上对方昵称），觉得不该插嘴就只回复 [SILENT] 三个字，不要发任何其他内容；\n4) 涉及转账/借钱/银行卡/密码/验证码/红包等金钱隐私话题一律不回复、不掺和；\n5) 消息用 [昵称(QQ:号码)] 前缀标注发言人，用他们的昵称称呼对方。"
+  },
+  "timeouts": {
+    "_说明": "等待 AI 回复的超时与轮询间隔。replyMs 越大越不容易误判超时，但掉线暴露越慢。",
+    "replyMs": 300000,
+    "pollMs": 1200
+  },
+  "watchdog": {
+    "_说明": "掉号看门狗：NapCat 被挤下线/假死时自动重启它（无人值守）。安全闸：只有本程序运行期间成功登录过一次（看到过正常登录态）才武装自动重登，避免首次扫码阶段被反复杀进程。launcherBat 可换成你的自定义启动器（须放在 app\\napcat 下）。",
+    "enable": true,
+    "pingIntervalMs": 30000,
+    "missLimit": 3,
+    "reloginMinGapMs": 300000,
+    "maxRelogin": 3,
+    "launcherBat": "启动NapCat.bat"
+  },
+  "_字段说明": {
+    "bot.name": "机器人昵称（留空默认“小助手”），会在给 AI 的身份描述里用到",
+    "owner.qq": "主人 QQ 号（数字）",
+    "owner.nick": "主人昵称，AI 用这个称呼你",
+    "onebot.wsUrl": "NapCat 正向 WebSocket 地址（默认 127.0.0.1:3001 不用改）",
+    "onebot.accessToken": "NapCat WS token（没设就留空）",
+    "onebot.selfId": "小号 QQ 号（留空自动识别）",
+    "dsh.baseUrl": "DSH 服务地址（默认 http://127.0.0.1:3080 不用改）",
+    "dsh.sessionId": "AI 会话名前缀，建议改成你自己的标识（如 my-bot）",
+    "dsh.cwd": "AI 会话工作目录（留空 = 包根目录）",
+    "groups": "群白名单数组，[群号1, 群号2] 必须同一方括号逗号分隔",
+    "personaFile": "人设档案路径（相对包根目录），首次建会话时全文作为人设种子",
+    "seedExtra": "附加播种文本（可选，追加在人设之后）",
+    "replyPolicy.interestKeywords": "兴趣词：命中才可能主动插嘴",
+    "replyPolicy.blockKeywords": "黑名单词：命中必静默（防金钱诈骗话题）",
+    "replyPolicy.silentMarker": "AI 说这个词=不值得插嘴，桥接拦截不发",
+    "replyPolicy.contextWindow": "喂给 AI 的最近群消息条数",
+    "replyPolicy.maxRepliesPerMinute": "每分钟最多回复条数（限频防风控）",
+    "replyPolicy.replyAt": "被 @ 时是否 @ 回去",
+    "replyPolicy.fallbackText": "AI 卡住/超时兜底提醒文案",
+    "replyPolicy.rules": "每次发问附带的规则文本，支持占位符 {botName} {selfQq} {ownerNick} {ownerQq}",
+    "timeouts.replyMs": "等待 AI 回复超时毫秒",
+    "timeouts.pollMs": "轮询回复间隔毫秒",
+    "watchdog.enable": "是否启用掉号看门狗",
+    "watchdog.pingIntervalMs": "探活间隔毫秒",
+    "watchdog.missLimit": "连续探活失败多少次判定掉号",
+    "watchdog.reloginMinGapMs": "两次自动重登最小间隔（防抖）",
+    "watchdog.maxRelogin": "连续自动重登上限（防风控）",
+    "watchdog.launcherBat": "重登时启动的 NapCat 启动器文件名（须在 app\\napcat 下）"
+  }
+}

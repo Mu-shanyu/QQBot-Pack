@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QQBot 管理台</title>
+<style>
+  :root{
+    --bg1:#eaf3ff; --bg2:#d8e9ff; --card:#ffffff; --ink:#1c2b4a; --sub:#6b7ea8;
+    --blue:#1e6fff; --blue2:#0d47c9; --green:#16a34a; --red:#dc2626; --amber:#d97706;
+    --line:#dbe6f6; --radius:16px; --shadow:0 6px 18px rgba(30,111,255,.10);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Microsoft YaHei UI","PingFang SC","微软雅黑",system-ui,sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2)); color:var(--ink);
+    min-height:100vh; padding:18px 16px 40px;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 2px 14px}
+  header h1{margin:0;font-size:26px;letter-spacing:.5px}
+  header h1 .fish{font-style:normal;margin-right:4px}
+  header .tag{font-size:12px;color:var(--sub);background:#fff;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+  nav{display:flex;gap:8px;margin-bottom:14px}
+  nav button{
+    border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 22px;
+    border-radius:999px;cursor:pointer;font-size:14px;transition:.15s;
+  }
+  nav button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .view{display:none}
+  .view.on{display:block}
+  /* 状态卡片 */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;position:relative}
+  .card .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+  .dot.up{background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+  .dot.down{background:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.15)}
+  .card h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;justify-content:space-between}
+  .card .port{font-size:12px;color:var(--sub);font-weight:400}
+  .card .desc{font-size:12.5px;color:var(--sub);line-height:1.7}
+  .card .act{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:4px;border:none;border-radius:10px;
+    background:var(--blue);color:#fff;padding:7px 13px;font-size:13px;cursor:pointer;text-decoration:none;
+  }
+  .btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+  .btn.warn{background:#fff;color:var(--red);border:1px solid var(--red)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  /* 面板卡片 */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+  .panel h2{margin:0 0 4px;font-size:16px}
+  .panel .hint{font-size:12.5px;color:var(--sub);margin:0 0 10px;line-height:1.8}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+  textarea{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13.5px;
+    font-family:inherit;resize:vertical;background:#fbfdff;color:var(--ink);line-height:1.6;
+  }
+  textarea.mono{font-family:Consolas,"Courier New",monospace;font-size:12.5px}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:230px}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#111a2e;color:#fff;
+    padding:10px 20px;border-radius:12px;font-size:13.5px;z-index:50;display:none;max-width:84vw;
+  }
+  .toast.show{display:block}
+  pre.logs{
+    background:#0e1626;color:#cfe3ff;border-radius:12px;padding:12px 14px;font-size:12px;
+    max-height:340px;overflow:auto;line-height:1.65;font-family:Consolas,"Courier New",monospace;white-space:pre-wrap;word-break:break-all;
+  }
+  .chip{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;background:#eef5ff;color:var(--blue2);border:1px solid #cfe0ff;margin:2px 4px 2px 0}
+  .warnbox{background:#fff7e8;border:1px solid #ffd9a0;color:#8a5300;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.8}
+  .foot{margin-top:18px;text-align:center;font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="fish">🐟</span>QQBot 管理台</h1>
+    <span class="tag" id="tagConfig">配置加载中…</span>
+  </header>
+
+  <nav>
+    <button id="nav-portal" class="on" onclick="switchView('portal')">🏠 门户</button>
+    <button id="nav-admin" onclick="switchView('admin')">⚙️ 管理面板</button>
+  </nav>
+
+  <!-- ============ 门户 ============ -->
+  <section id="view-portal" class="view on">
+    <div id="noConfig" class="warnbox" style="display:none">
+      还没有找到 <b>config\bridge.config.json</b>！请先运行 <b>首次配置.bat</b>（或手动把 config\bridge.config.example.json 复制改名并填写），
+      然后点下面的「重启桥接」。
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="panel">
+      <h2>🐶 桥接看门狗</h2>
+      <p class="hint">掉号自动重登的最近动态（来自 logs\bridge.log）。看门狗只有在你成功登录过一次后才会武装，首次扫码阶段不会被反复重启。</p>
+      <pre class="logs" id="watchdogLog">加载中…</pre>
+    </div>
+    <div class="panel">
+      <h2>📜 桥接最近动态</h2>
+      <p class="hint">logs\bridge.log 最后 15 行，5 秒自动刷新。</p>
+      <pre class="logs" id="bridgeRecent">加载中…</pre>
+    </div>
+  </section>
+
+  <!-- ============ 管理面板 ============ -->
+  <section id="view-admin" class="view">
+    <div class="panel">
+      <h2>💬 群白名单</h2>
+      <p class="hint">只在这些群里回复。每行一个群号（纯数字）。改完点「保存并热生效」——桥接下一条消息就会用新配置，无需重启。</p>
+      <textarea id="fGroups" rows="5" placeholder="111111111&#10;222222222"></textarea>
+      <div class="bar">
+        <span id="groupsStat" class="chip"></span>
+        <button class="btn" onclick="saveConfig()">💾 保存群白名单</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>🗣️ 兴趣词 &amp; 黑名单词</h2>
+      <p class="hint">兴趣词：群里有人说到这些词，机器人可能主动插嘴；黑名单词：说到必静默（建议放金钱/隐私类，如 转账、密码）。用逗号或换行分隔。</p>
+      <div class="row">
+        <div><label>兴趣词</label><textarea id="fInterest" rows="6"></textarea></div>
+        <div><label>黑名单词</label><textarea id="fBlock" rows="6"></textarea></div>
+      </div>
+      <div class="bar"><button class="btn" onclick="saveKeywords()">💾 保存关键词</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>📏 回复规则（热改）</h2>
+      <p class="hint">这是每次发问前喂给 AI 的规则文本。占位符会被自动替换：<span class="chip">{botName}</span><span class="chip">{selfQq}</span><span class="chip">{ownerNick}</span><span class="chip">{ownerQq}</span>。想改风格直接改这里保存即可。</p>
+      <textarea id="fRules" class="mono" rows="10"></textarea>
+      <div class="bar"><button class="btn" onclick="saveRules()">💾 保存回复规则</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>🔄 服务控制</h2>
+      <p class="hint">重启后由各自的启动器窗口自动拉起（约 5 秒）。如果某个服务当初不是用封装包的启动脚本开的，就不会自动拉起，请手动开。</p>
+      <div class="bar" style="justify-content:flex-start">
+        <button class="btn" onclick="restart('bridge')">🔄 重启桥接</button>
+        <button class="btn" onclick="restart('napcat')">🔄 重启 NapCat</button>
+        <button class="btn ghost" onclick="openNapcatWebui()">🔗 打开 NapCat WebUI</button>
+        <button class="btn ghost" onclick="window.open('http://127.0.0.1:3080','_blank')">🔗 打开 DSH 控制台(3080)</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📜 日志查看</h2>
+      <p class="hint">下拉选择日志文件，点刷新读取尾部。</p>
+      <div class="bar" style="justify-content:flex-start">
+        <select id="logFile" onchange="loadLogs()">
+          <option value="bridge">bridge.log（桥接）</option>
+          <option value="dsh">dsh.log（DSH）</option>
+        </select>
+        <button class="btn ghost" onclick="loadLogs()">🔄 刷新日志</button>
+      </div>
+      <pre class="logs" id="logView" style="margin-top:12px">加载中…</pre>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let S = null; // 最近一次 /api/status
+
+function $(id){ return document.getElementById(id); }
+function toast(msg, ms){
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), ms||3200);
+}
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('view-'+name).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  $('nav-'+name).classList.add('on');
+  if(name==='admin' && S) fillAdmin();
+  if(name==='admin') loadLogs();
+}
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function api(path, opt){
+  try{
+    const r = await fetch(path, opt);
+    return await r.json();
+  }catch(e){ toast('请求失败：'+e.message); return {ok:false,message:e.message}; }
+}
+
+function cardHtml(svc, icon, name, desc, up, buttons){
+  return `<div class="card">
+    <h3>${icon} ${esc(name)} <span class="port">:${svc.port}</span></h3>
+    <div><span class="dot ${up?'up':'down'}"></span>${up?'运行中':'未运行'}</div>
+    <div class="desc">${desc}</div>
+    <div class="act">${buttons||''}</div>
+  </div>`;
+}
+
+async function refreshStatus(){
+  const st = await api('/api/status');
+  if(!st || !st.services) return;
+  S = st;
+  $('tagConfig').textContent = st.configLoaded
+    ? (st.botName ? '🤖 '+st.botName : '') + ' · 已找到配置' + (st.groups&&st.groups.length? ' · 白名单 '+st.groups.length+' 群':' · ⚠️ 未填群号')
+    : '⚠️ 未找到 bridge.config.json';
+  $('noConfig').style.display = st.configLoaded ? 'none' : 'block';
+  const s = st.services;
+  const token = st.napcatToken;
+  const napUrl = token ? `http://127.0.0.1:${s.napcat.port}/webui?token=${encodeURIComponent(token)}` : `http://127.0.0.1:${s.napcat.port}/webui`;
+  $('cards').innerHTML =
+    cardHtml(s.napcat, '🐧', 'NapCat（QQ 登录）', 'NapCat WebUI，扫码登录你的 QQ 小号。', s.napcat.up,
+      `<a class="btn" target="_blank" href="${napUrl}">打开${token?'(带令牌)':''}</a>`)
+    + cardHtml(s.dsh, '🧠', 'DeepSeek Harness', 'AI 大脑（3080）。首次要在里面填 DeepSeek API Key。', s.dsh.up,
+      `<a class="btn" target="_blank" href="http://127.0.0.1:${s.dsh.port}">打开 DSH</a>`)
+    + cardHtml(s.onebot, '🔌', 'OneBot WS（3001）', 'NapCat 推给桥接的消息通道。', s.onebot.up, '')
+    + cardHtml(s.bridge, '🐟', '桥接程序', 'QQ ↔ AI 的中间人（锁端口 '+s.bridge.lockPort+'）。', s.bridge.up,
+      `<button class="btn ghost" onclick="restart('bridge')">重启</button>`);
+  // 看门狗与最近动态
+  $('watchdogLog').textContent = (st.watchdogLog && st.watchdogLog.length) ? st.watchdogLog.join('\n') : '（暂无看门狗记录——登录成功后会自动武装）';
+  $('bridgeRecent').textContent = (st.bridgeLogTail && st.bridgeLogTail.length) ? st.bridgeLogTail.join('\n') : '（bridge.log 还没有内容）';
+  if(document.querySelector('#view-admin.on')) fillAdmin();
+}
+
+function fillAdmin(){
+  if(!S) return;
+  const st = S;
+  $('fGroups').value = (st.groups||[]).join('\n');
+  $('groupsStat').textContent = (st.groups||[]).length + ' 个群';
+}
+function splitList(s){
+  return s.split(/[\s,，、;；]+/).map(x=>x.trim()).filter(Boolean);
+}
+async function saveConfig(){
+  const groups = $('fGroups').value.split('\n').map(x=>x.trim()).filter(Boolean)
+    .map(x=>{ const n=Number(x); return Number.isInteger(n)&&n>0 ? n : NaN; });
+  if(groups.some(Number.isNaN)){ toast('群号必须是纯数字，每行一个'); return; }
+  const r = await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fields:{groups}})});
+  toast(r.ok?('已保存，共 '+groups.length+' 个群，桥接热生效 ✔'):('保存失败：'+(r.message||'')));
+  if(r.ok) refreshStatus();
+}
+async function saveKeywords(){
+  const interest = splitList($('fInterest').value);
+  const block = splitList($('fBlock').value);
+  const r = await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fields:{'replyPolicy.interestKeywords':interest,'replyPolicy.blockKeywords':block}})});
+  toast(r.ok?('已保存：兴趣词 '+interest.length+' 个、黑名单词 '+block.length+' 个 ✔'):('保存失败：'+(r.message||'')));
+  if(r.ok) refreshStatus();
+}
+async function saveRules(){
+  const rules = $('fRules').value;
+  const r = await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fields:{'replyPolicy.rules':rules}})});
+  toast(r.ok?('规则已保存并热生效 ✔'):('保存失败：'+(r.message||'')));
+  if(r.ok) refreshStatus();
+}
+async function restart(target){
+  if(!confirm(target==='bridge'?'确认重启桥接程序？约 5 秒后自动拉起。':'确认重启 NapCat？正在进行的登录可能会中断。')) return;
+  toast('正在重启 '+target+' …');
+  const r = await api('/api/restart',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({target})});
+  toast(r.message || (r.ok?'已触发重启 ✔':'操作失败'));
+  setTimeout(refreshStatus, 1500);
+}
+function openNapcatWebui(){
+  if(!S) return;
+  const port = S.services.napcat.port;
+  const url = S.napcatToken ? `http://127.0.0.1:${port}/webui?token=${encodeURIComponent(S.napcatToken)}` : `http://127.0.0.1:${port}/webui`;
+  window.open(url,'_blank');
+}
+async function loadLogs(){
+  const file = $('logFile').value;
+  const r = await api('/api/logs?file='+encodeURIComponent(file)+'&tail=300');
+  $('logView').textContent = r.ok ? (r.lines.length? r.lines.join('\n') : '（日志为空）') : ('⚠️ '+(r.message||'读取失败'));
+}
+async function loadAdminFields(){
+  const r = await api('/api/config');
+  if(!r.ok) return;
+  const c = r.config;
+  $('fGroups').value = (c.groups||[]).join('\n');
+  $('fInterest').value = (c.replyPolicy&&c.replyPolicy.interestKeywords||[]).join('，');
+  $('fBlock').value = (c.replyPolicy&&c.replyPolicy.blockKeywords||[]).join('，');
+  $('fRules').value = (c.replyPolicy&&c.replyPolicy.rules)||'';
+}
+
+refreshStatus();
+setInterval(refreshStatus, 5000);
+loadAdminFields();
+</script>
+</body>
+</html>

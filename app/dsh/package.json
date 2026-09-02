@@ -1,0 +1,16 @@
+{
+  "name": "qqbot-pack-dsh",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DeepSeek Harness 运行目录（QQBot-Pack 封装包内本地安装，供部署者自填 API Key 后跑自己的机器人）",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh": "0.1.1-rc.2"
+  },
+  "scripts": {
+    "start": "dsh web --no-open"
+  }
+}
